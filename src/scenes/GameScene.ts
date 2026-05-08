@@ -9,6 +9,7 @@ import { ObstacleManager } from '../obstacles/ObstacleManager'
 import { CollisionManager } from '../collision/CollisionManager'
 import { DifficultyManager } from '../difficulty/DifficultyManager'
 import { HUD } from '../hud/HUD'
+import { VirtualJoystick } from '../input/VirtualJoystick'
 import {
   drawRing,
   drawCenterPoint,
@@ -52,6 +53,9 @@ export class GameScene extends Phaser.Scene {
   private speedLines: SpeedLine[] = []
   private flashWarp!: FlashWarpState
 
+  // Input mobile
+  private joystick!: VirtualJoystick
+
   constructor() {
     super({ key: 'GameScene' })
   }
@@ -70,6 +74,9 @@ export class GameScene extends Phaser.Scene {
     // Speed lines (effetto warp)
     this.speedLines = createSpeedLines(60)
     this.flashWarp = createFlashWarpState()
+
+    // Joystick virtuale (sempre attivo, usato solo su touch)
+    this.joystick = new VirtualJoystick(this)
 
     // Scanlines CRT — overlay statico creato una volta
     const scanlines = this.add.graphics()
@@ -111,18 +118,21 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateTitle(_delta: number): void {
-    if (Phaser.Input.Keyboard.JustDown(this.keySpace)) {
+    const spaceDown = Phaser.Input.Keyboard.JustDown(this.keySpace)
+    if (spaceDown || this.joystick.consumeTap()) {
       this.startGame()
     }
   }
 
   private updatePlaying(delta: number): void {
-    // Keys player (frecce o WASD, entrambe supportate)
+    // Keys player (frecce o WASD o joystick touch)
+    const { dx, dy } = this.joystick.getAxes()
+    const THOLD = 0.3
     const keys: PlayerKeys = {
-      left: this.cursors.left.isDown || this.keyA.isDown,
-      right: this.cursors.right.isDown || this.keyD.isDown,
-      up: this.cursors.up.isDown || this.keyW.isDown,
-      down: this.cursors.down.isDown || this.keyS.isDown,
+      left:  this.cursors.left.isDown  || this.keyA.isDown || dx < -THOLD,
+      right: this.cursors.right.isDown || this.keyD.isDown || dx >  THOLD,
+      up:    this.cursors.up.isDown    || this.keyW.isDown || dy < -THOLD,
+      down:  this.cursors.down.isDown  || this.keyS.isDown || dy >  THOLD,
     }
 
     // Aggiorna moduli
@@ -162,6 +172,7 @@ export class GameScene extends Phaser.Scene {
     drawCenterPoint(this.graphics)
     this.obstacleManager.draw(this.graphics)
     this.player.draw(this.graphics)
+    this.joystick.draw(this.graphics)
 
     // Flash collisione (decade)
     if (this.flashAlpha > 0) {
@@ -188,7 +199,8 @@ export class GameScene extends Phaser.Scene {
 
     if (
       Phaser.Input.Keyboard.JustDown(this.keySpace) ||
-      Phaser.Input.Keyboard.JustDown(this.keyR)
+      Phaser.Input.Keyboard.JustDown(this.keyR) ||
+      this.joystick.consumeTap()
     ) {
       this.scene.restart()
     }
