@@ -10,6 +10,7 @@ type GameState = 'title' | 'playing' | 'gameover'
 export class HUD {
   private scene: Phaser.Scene
   private scoreText!: Phaser.GameObjects.Text
+  private levelText!: Phaser.GameObjects.Text
   private titleGroup!: Phaser.GameObjects.Group
   private gameoverGroup!: Phaser.GameObjects.Group
   private blinkTimer = 0
@@ -30,6 +31,14 @@ export class HUD {
     })
     this.scoreText.setDepth(10)
     this.scoreText.setVisible(false)
+
+    this.levelText = this.scene.add.text(16, 42, 'LVL: 1', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#006655',
+    })
+    this.levelText.setDepth(10)
+    this.levelText.setVisible(false)
   }
 
   private createTitleOverlay(): void {
@@ -105,6 +114,7 @@ export class HUD {
     this.blinkVisible = true  // reset blink a ogni cambio stato
     this.blinkTimer = 0
     this.scoreText.setVisible(state === 'playing')
+    this.levelText.setVisible(state === 'playing')
     this.titleGroup.setVisible(state === 'title')
     this.gameoverGroup.setVisible(state === 'gameover')
 
@@ -118,6 +128,10 @@ export class HUD {
 
   updateScore(score: number): void {
     this.scoreText.setText(`SCORE: ${String(score).padStart(4, '0')}`)
+  }
+
+  updateLevel(level: number): void {
+    this.levelText.setText(`LVL: ${level + 1}`)
   }
 
   private currentState: GameState = 'title'

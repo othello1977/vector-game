@@ -9,7 +9,14 @@ import { ObstacleManager } from '../obstacles/ObstacleManager'
 import { CollisionManager } from '../collision/CollisionManager'
 import { DifficultyManager } from '../difficulty/DifficultyManager'
 import { HUD } from '../hud/HUD'
-import { drawRing } from '../rendering/RenderHelpers'
+import {
+  drawRing,
+  drawCenterPoint,
+  drawSpeedLines,
+  updateSpeedLines,
+  createSpeedLines,
+  SpeedLine,
+} from '../rendering/RenderHelpers'
 
 type GameState = 'title' | 'playing' | 'gameover'
 
@@ -37,6 +44,9 @@ export class GameScene extends Phaser.Scene {
   // Flash collisione
   private flashAlpha = 0
 
+  // Effetti visivi Step 10
+  private speedLines: SpeedLine[] = []
+
   constructor() {
     super({ key: 'GameScene' })
   }
@@ -51,6 +61,17 @@ export class GameScene extends Phaser.Scene {
     this.collisionManager = new CollisionManager()
     this.difficultyManager = new DifficultyManager()
     this.hud = new HUD(this)
+
+    // Speed lines (effetto warp)
+    this.speedLines = createSpeedLines(60)
+
+    // Scanlines CRT — overlay statico creato una volta
+    const scanlines = this.add.graphics()
+    scanlines.setDepth(50)
+    for (let y = 0; y < GAME_HEIGHT; y += 3) {
+      scanlines.fillStyle(0x000000, 0.12)
+      scanlines.fillRect(0, y, GAME_WIDTH, 1)
+    }
 
     // Input
     this.cursors = this.input.keyboard!.createCursorKeys()
@@ -111,6 +132,7 @@ export class GameScene extends Phaser.Scene {
     this.survivalMs += delta
     this.score = Math.floor(this.survivalMs / 100)
     this.hud.updateScore(this.score)
+    this.hud.updateLevel(this.difficultyManager.level)
 
     // Collisione
     const hit = this.collisionManager.check(this.player, this.obstacleManager.obstacles)
@@ -120,7 +142,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Rendering
+    updateSpeedLines(this.speedLines, delta, this.difficultyManager.obstacleSpeed)
+    drawSpeedLines(this.graphics, this.speedLines)
     drawRing(this.graphics)
+    drawCenterPoint(this.graphics)
     this.obstacleManager.draw(this.graphics)
     this.player.draw(this.graphics)
 
@@ -133,8 +158,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateGameOver(delta: number): void {
-    // Ostacoli continuano ad animarsi in background
+    // Ostacoli e speed lines continuano ad animarsi in background
+    drawSpeedLines(this.graphics, this.speedLines)
     drawRing(this.graphics)
+    drawCenterPoint(this.graphics)
     this.obstacleManager.draw(this.graphics)
 
     // Flash residuo

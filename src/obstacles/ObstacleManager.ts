@@ -79,16 +79,6 @@ export class ObstacleManager {
   ): void {
     const { angle, radius, angularWidth, thickness } = obs
 
-    /*if (radius < RING_INNER_RADIUS) {
-      // Prima di entrare nell'anello: puntino che si avvicina dal centro
-      const dotR = Math.max(1, (radius / RING_INNER_RADIUS) * 3)
-      const px = CX + Math.cos(angle) * radius
-      const py = CY + Math.sin(angle) * radius
-      graphics.fillStyle(COLOR_OBSTACLE, 0.7)
-      graphics.fillCircle(px, py, dotR)
-      return
-    }*/
-
     // Nell'anello: arco pieno
     const startAngle = angle - angularWidth / 2
     const endAngle = angle + angularWidth / 2
