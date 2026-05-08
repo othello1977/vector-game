@@ -39,10 +39,23 @@ export class VirtualJoystick {
   private onDown(pointer: Phaser.Input.Pointer): void {
     if (this.pointerId === null) {
       this.pointerId = pointer.id
-      this.baseX = pointer.x
-      this.baseY = pointer.y
-      this.thumbX = pointer.x
-      this.thumbY = pointer.y
+
+      const W = this.scene.scale.width
+      const H = this.scene.scale.height
+
+      // Il touch è valido per il joystick solo nella metà inferiore
+      if (pointer.y > H * 0.5) {
+        // Clamp il centro così il cerchio non esce mai dallo schermo
+        this.baseX = Phaser.Math.Clamp(pointer.x, BASE_R, W - BASE_R)
+        this.baseY = Phaser.Math.Clamp(pointer.y, H * 0.5 + BASE_R, H - BASE_R)
+      } else {
+        // Touch nella metà alta: ancora il joystick nella zona bassa centrale
+        this.baseX = W / 2
+        this.baseY = H - BASE_R - 20
+      }
+
+      this.thumbX = this.baseX
+      this.thumbY = this.baseY
       this.dx = 0
       this.dy = 0
       this.visible = true
