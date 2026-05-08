@@ -63,8 +63,8 @@ export class Player {
     // Vertice anteriore puntato verso il CENTRO (raggio minore = interno)
     const front = polarToCart(this.angle, this.radius - PLAYER_SIZE * 1.4)
     // Vertici laterali (base dimezzata rispetto alla versione precedente)
-    const left = polarToCart(this.angle - 0.28, this.radius + PLAYER_SIZE * 0.35)
-    const right = polarToCart(this.angle + 0.28, this.radius + PLAYER_SIZE * 0.35)
+    const left = polarToCart(this.angle - 0.18, this.radius + PLAYER_SIZE * 0.15)
+    const right = polarToCart(this.angle + 0.18, this.radius + PLAYER_SIZE * 0.15)
 
     // Glow
     graphics.lineStyle(6, color, 0.18)

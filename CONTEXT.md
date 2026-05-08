@@ -303,11 +303,11 @@ LVL: 3        [opzionale]
 | `GAME_WIDTH` | 800 | Larghezza canvas |
 | `GAME_HEIGHT` | 800 | Altezza canvas |
 | `RING_INNER_RADIUS` | 100 | Raggio cerchio interno |
-| `RING_OUTER_RADIUS` | 380 | Raggio cerchio esterno |
+| `RING_OUTER_RADIUS` | 480 | Raggio cerchio esterno |
 | `PLAYER_SPEED_ANGULAR` | 2.5 | Velocità rotazione (rad/s) |
 | `PLAYER_SPEED_RADIAL` | 80 | Velocità radiale (px/s) |
-| `PLAYER_SIZE` | 14 | Dimensione navicella (px) |
-| `PLAYER_HITBOX_R` | 10 | Raggio hitbox player |
+| `PLAYER_SIZE` | 6 | Dimensione navicella (px) |
+| `PLAYER_HITBOX_R` | 5 | Raggio hitbox player |
 | `OBSTACLE_SPEED_START` | 60 | Velocità ostacoli iniziale (px/s) |
 | `OBSTACLE_SPEED_MAX` | 220 | Velocità ostacoli massima |
 | `OBSTACLE_SPAWN_INTERVAL_START` | 1200 | Intervallo spawn iniziale (ms) |
