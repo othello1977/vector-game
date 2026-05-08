@@ -25,6 +25,10 @@ export const OBSTACLE_ANGULAR_WIDTH_MIN = 0.13     // rad
 export const OBSTACLE_ANGULAR_WIDTH_MAX = 0.28     // rad
 export const OBSTACLE_THICKNESS = 7                // px
 
+// Scudo
+export const SHIELD_MAX_LEVEL = 3
+export const SHIELD_RECHARGE_INTERVAL = 30000  // ms
+
 // Difficoltà
 export const DIFFICULTY_RAMP_INTERVAL = 5000  // ms
 

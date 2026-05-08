@@ -141,10 +141,16 @@ export class GameScene extends Phaser.Scene {
     this.hud.updateLevel(this.difficultyManager.level)
 
     // Collisione
-    const hit = this.collisionManager.check(this.player, this.obstacleManager.obstacles)
-    if (hit) {
-      this.flashAlpha = 0.6
-      this.setState('gameover')
+    const hitObs = this.collisionManager.check(this.player, this.obstacleManager.obstacles)
+    if (hitObs) {
+      const blocked = this.player.hitShield()
+      if (blocked) {
+        hitObs.alive = false
+        this.flashAlpha = 0.3
+      } else {
+        this.flashAlpha = 0.6
+        this.setState('gameover')
+      }
     }
 
     // Rendering

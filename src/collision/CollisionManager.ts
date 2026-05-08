@@ -14,8 +14,8 @@ function angleDiff(a: number, b: number): number {
 }
 
 export class CollisionManager {
-  /** Restituisce true se il player collide con almeno un ostacolo */
-  check(player: Player, obstacles: Obstacle[]): boolean {
+  /** Restituisce l'ostacolo colpito, o null se nessuna collisione */
+  check(player: Player, obstacles: Obstacle[]): Obstacle | null {
     const hitR = PLAYER_HITBOX_R
 
     for (const obs of obstacles) {
@@ -33,9 +33,9 @@ export class CollisionManager {
       const diff = Math.abs(angleDiff(player.angle, obs.angle))
       if (diff > obs.angularWidth / 2 + playerAngularSize) continue
 
-      return true
+      return obs
     }
 
-    return false
+    return null
   }
 }
