@@ -12,7 +12,7 @@ export const RING_OUTER_RADIUS = 380
 
 // Player
 export const PLAYER_SPEED_ANGULAR = 2.5   // rad/s
-export const PLAYER_SPEED_RADIAL = 80     // px/s
+export const PLAYER_SPEED_RADIAL = 100     // px/s
 export const PLAYER_SIZE = 20             // px, dimensione triangolo
 export const PLAYER_HITBOX_R = 15         // px, raggio hitbox
 
