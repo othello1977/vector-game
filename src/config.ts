@@ -7,7 +7,7 @@ export const GAME_WIDTH = 800
 export const GAME_HEIGHT = 800
 
 // Anello giocabile
-export const RING_INNER_RADIUS = 100
+export const RING_INNER_RADIUS = 160
 export const RING_OUTER_RADIUS = 380
 
 // Player

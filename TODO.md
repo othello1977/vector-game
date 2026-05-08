@@ -192,7 +192,7 @@ UP/DOWN:    radius -= PLAYER_SPEED_RADIAL * delta/1000   (UP = verso centro)
 
 **Disegno navicella:**
 ```
-Triangolo isoscele con vertice anteriore puntato verso l'esterno dell'anello.
+Triangolo isoscele con vertice anteriore puntato verso l'interno dell'anello.
 Il vertice "anteriore" è nella direzione (angle) rispetto al centro.
 3 punti calcolati da polarToCart con angoli offset (+/- 0.3 rad).
 Fill: COLOR_PLAYER
