@@ -19,6 +19,7 @@ export interface Obstacle {
   angularWidth: number
   thickness: number
   alive: boolean
+  seed: number
 }
 
 export class ObstacleManager {
@@ -62,6 +63,7 @@ export class ObstacleManager {
       angularWidth,
       thickness: OBSTACLE_THICKNESS,
       alive: true,
+      seed: Math.floor(Math.random() * 100000),
     })
   }
 
@@ -76,23 +78,7 @@ export class ObstacleManager {
     graphics: Phaser.GameObjects.Graphics,
     obs: Obstacle,
   ): void {
-    const { angle, radius, angularWidth, thickness } = obs
-
-    // Nell'anello: arco pieno
-    const startAngle = angle - angularWidth / 2
-    const endAngle = angle + angularWidth / 2
-    const steps = Math.max(8, Math.round(angularWidth * 20))
-    const innerR = Math.max(1, radius - thickness / 2)
-    const outerR = radius + thickness / 2
-
-    // Glow
-    graphics.lineStyle(thickness + 6, COLOR_OBSTACLE, 0.15)
-    drawArcPath(graphics, CX, CY, radius, startAngle, endAngle, steps, thickness + 4)
-
-    // Corpo principale
-    graphics.fillStyle(COLOR_OBSTACLE, 0.9)
-    graphics.lineStyle(1.5, 0xff88ff, 0.8)
-    drawFilledArcBand(graphics, CX, CY, innerR, outerR, startAngle, endAngle, steps)
+    drawMeteor(graphics, obs)
   }
 
   reset(): void {
@@ -101,59 +87,55 @@ export class ObstacleManager {
   }
 }
 
-/** Disegna una banda anulare piena (trapezio curvato) */
-function drawFilledArcBand(
+/** Forma irregolare tipo meteorite (poligono con noise deterministico) */
+function drawMeteor(
   graphics: Phaser.GameObjects.Graphics,
-  cx: number,
-  cy: number,
-  innerR: number,
-  outerR: number,
-  startAngle: number,
-  endAngle: number,
-  steps: number,
+  obs: Obstacle,
 ): void {
+  const { angle, radius, angularWidth, thickness, seed } = obs
+  const innerR = Math.max(1, radius - thickness / 2)
+  const outerR = radius + thickness / 2
+  const startA = angle - angularWidth / 2
+  const endA = angle + angularWidth / 2
+
+  // RNG deterministica dal seed dell'ostacolo (stessa forma ogni frame)
+  let s = seed
+  const rng = (): number => { s = ((s * 9301 + 49297) % 233280); return s / 233280 }
+
+  const N = 7
+  const verts: { x: number; y: number }[] = []
+
+  // Vertici lato esterno (startA → endA) con noise
+  for (let i = 0; i <= N; i++) {
+    const t = i / N
+    const a = startA + t * (endA - startA) + (rng() - 0.5) * angularWidth * 0.22
+    const r = outerR + (rng() - 0.5) * thickness * 1.4
+    verts.push({ x: CX + Math.cos(a) * r, y: CY + Math.sin(a) * r })
+  }
+  // Vertici lato interno (endA → startA, inverso)
+  for (let i = N; i >= 0; i--) {
+    const t = i / N
+    const a = startA + t * (endA - startA) + (rng() - 0.5) * angularWidth * 0.22
+    const r = innerR + (rng() - 0.5) * thickness * 1.4
+    verts.push({ x: CX + Math.cos(a) * r, y: CY + Math.sin(a) * r })
+  }
+
+  // Glow esterno (poligono allargato)
+  graphics.fillStyle(COLOR_OBSTACLE, 0.12)
+  graphics.lineStyle(thickness + 5, COLOR_OBSTACLE, 0.18)
   graphics.beginPath()
+  graphics.moveTo(verts[0].x, verts[0].y)
+  for (let i = 1; i < verts.length; i++) graphics.lineTo(verts[i].x, verts[i].y)
+  graphics.closePath()
+  graphics.strokePath()
 
-  // Bordo esterno (da startAngle a endAngle)
-  for (let i = 0; i <= steps; i++) {
-    const a = startAngle + (endAngle - startAngle) * (i / steps)
-    const x = cx + Math.cos(a) * outerR
-    const y = cy + Math.sin(a) * outerR
-    if (i === 0) graphics.moveTo(x, y)
-    else graphics.lineTo(x, y)
-  }
-
-  // Bordo interno (da endAngle a startAngle, inverso)
-  for (let i = steps; i >= 0; i--) {
-    const a = startAngle + (endAngle - startAngle) * (i / steps)
-    const x = cx + Math.cos(a) * innerR
-    const y = cy + Math.sin(a) * innerR
-    graphics.lineTo(x, y)
-  }
-
+  // Corpo principale
+  graphics.fillStyle(COLOR_OBSTACLE, 0.88)
+  graphics.lineStyle(1.5, 0xff88ff, 0.9)
+  graphics.beginPath()
+  graphics.moveTo(verts[0].x, verts[0].y)
+  for (let i = 1; i < verts.length; i++) graphics.lineTo(verts[i].x, verts[i].y)
   graphics.closePath()
   graphics.fillPath()
-  graphics.strokePath()
-}
-
-/** Disegna un arco spesso per il glow */
-function drawArcPath(
-  graphics: Phaser.GameObjects.Graphics,
-  cx: number,
-  cy: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number,
-  steps: number,
-  _lineWidth: number,
-): void {
-  graphics.beginPath()
-  for (let i = 0; i <= steps; i++) {
-    const a = startAngle + (endAngle - startAngle) * (i / steps)
-    const x = cx + Math.cos(a) * radius
-    const y = cy + Math.sin(a) * radius
-    if (i === 0) graphics.moveTo(x, y)
-    else graphics.lineTo(x, y)
-  }
   graphics.strokePath()
 }

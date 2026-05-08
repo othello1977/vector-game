@@ -8,7 +8,6 @@ import {
   GAME_HEIGHT,
   RING_INNER_RADIUS,
   RING_OUTER_RADIUS,
-  COLOR_RING,
 } from '../config'
 
 export const CX = GAME_WIDTH / 2
@@ -35,13 +34,16 @@ export function drawRing(graphics: Phaser.GameObjects.Graphics): void {
   graphics.closePath()
   graphics.fillPath()
 
-  // Glow esterno bordo esterno
-  graphics.lineStyle(10, COLOR_RING, 0.08)
-  graphics.strokeCircle(CX, CY, RING_OUTER_RADIUS)
-
-  // Bordo esterno principale
-  graphics.lineStyle(1.5, COLOR_RING, 0.8)
-  graphics.strokeCircle(CX, CY, RING_OUTER_RADIUS)
+  // Fade nero dal bordo esterno: 100% trasparente a -50px, 100% opaco al bordo
+  const FADE_STEPS = 32
+  const FADE_START = RING_OUTER_RADIUS - 50
+  const FADE_END = RING_OUTER_RADIUS + 8
+  for (let i = 0; i < FADE_STEPS; i++) {
+    const t = i / (FADE_STEPS - 1)
+    const r = FADE_START + (FADE_END - FADE_START) * t
+    graphics.lineStyle(3.5, 0x000000, Math.pow(t, 0.6) * 0.98)
+    graphics.strokeCircle(CX, CY, r)
+  }
 }
 
 /** Punto luminoso al centro dello schermo (origine degli ostacoli) */
@@ -72,7 +74,7 @@ export function updateSpeedLines(
   obstacleSpeed: number,
 ): void {
   const dt = delta / 1000
-  const lineSpeed = obstacleSpeed * 3.5
+  const lineSpeed = obstacleSpeed * 6.0
 
   for (const l of lines) {
     l.radius += lineSpeed * dt
@@ -86,7 +88,7 @@ export function updateSpeedLines(
       // Ricicla la linea dal centro
       l.radius = Math.random() * 20
       l.angle = Math.random() * Math.PI * 2
-      l.length = 8 + Math.random() * 14
+      l.length = 30 + Math.random() * 40
       l.alpha = 0
     }
   }
@@ -100,7 +102,7 @@ export function drawSpeedLines(
     if (l.alpha <= 0.01) continue
     const p1 = polarToCart(l.angle, l.radius)
     const p2 = polarToCart(l.angle, l.radius + l.length)
-    graphics.lineStyle(2, 0x00ffcc, l.alpha)
+    graphics.lineStyle(3, 0x00ffcc, l.alpha)
     graphics.beginPath()
     graphics.moveTo(p1.x, p1.y)
     graphics.lineTo(p2.x, p2.y)
@@ -114,7 +116,7 @@ export function createSpeedLines(count = 60): SpeedLine[] {
     lines.push({
       angle: Math.random() * Math.PI * 2,
       radius: Math.random() * RING_OUTER_RADIUS,
-      length: 14 + Math.random() * 22,
+      length: 30 + Math.random() * 40,
       speed: 0, // sarà impostato da updateSpeedLines
       alpha: 0,
     })

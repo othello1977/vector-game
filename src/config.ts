@@ -21,9 +21,9 @@ export const OBSTACLE_SPEED_START = 60    // px/s
 export const OBSTACLE_SPEED_MAX = 220     // px/s
 export const OBSTACLE_SPAWN_INTERVAL_START = 1200  // ms
 export const OBSTACLE_SPAWN_INTERVAL_MIN = 300     // ms
-export const OBSTACLE_ANGULAR_WIDTH_MIN = 0.20     // rad
-export const OBSTACLE_ANGULAR_WIDTH_MAX = 0.45     // rad
-export const OBSTACLE_THICKNESS = 12               // px
+export const OBSTACLE_ANGULAR_WIDTH_MIN = 0.13     // rad
+export const OBSTACLE_ANGULAR_WIDTH_MAX = 0.28     // rad
+export const OBSTACLE_THICKNESS = 7                // px
 
 // Difficoltà
 export const DIFFICULTY_RAMP_INTERVAL = 5000  // ms
