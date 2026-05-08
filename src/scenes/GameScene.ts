@@ -16,6 +16,10 @@ import {
   updateSpeedLines,
   createSpeedLines,
   SpeedLine,
+  FlashWarpState,
+  createFlashWarpState,
+  updateFlashWarp,
+  drawFlashWarp,
 } from '../rendering/RenderHelpers'
 
 type GameState = 'title' | 'playing' | 'gameover'
@@ -46,6 +50,7 @@ export class GameScene extends Phaser.Scene {
 
   // Effetti visivi Step 10
   private speedLines: SpeedLine[] = []
+  private flashWarp!: FlashWarpState
 
   constructor() {
     super({ key: 'GameScene' })
@@ -64,6 +69,7 @@ export class GameScene extends Phaser.Scene {
 
     // Speed lines (effetto warp)
     this.speedLines = createSpeedLines(60)
+    this.flashWarp = createFlashWarpState()
 
     // Scanlines CRT — overlay statico creato una volta
     const scanlines = this.add.graphics()
@@ -144,6 +150,8 @@ export class GameScene extends Phaser.Scene {
     // Rendering
     updateSpeedLines(this.speedLines, delta, this.difficultyManager.obstacleSpeed)
     drawSpeedLines(this.graphics, this.speedLines)
+    updateFlashWarp(this.flashWarp, delta)
+    drawFlashWarp(this.graphics, this.flashWarp)
     drawRing(this.graphics)
     drawCenterPoint(this.graphics)
     this.obstacleManager.draw(this.graphics)
@@ -160,6 +168,7 @@ export class GameScene extends Phaser.Scene {
   private updateGameOver(delta: number): void {
     // Ostacoli e speed lines continuano ad animarsi in background
     drawSpeedLines(this.graphics, this.speedLines)
+    drawFlashWarp(this.graphics, this.flashWarp)
     drawRing(this.graphics)
     drawCenterPoint(this.graphics)
     this.obstacleManager.draw(this.graphics)

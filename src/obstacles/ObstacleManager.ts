@@ -4,7 +4,6 @@
 
 import Phaser from 'phaser'
 import {
-  RING_INNER_RADIUS,
   RING_OUTER_RADIUS,
   OBSTACLE_THICKNESS,
   OBSTACLE_ANGULAR_WIDTH_MIN,

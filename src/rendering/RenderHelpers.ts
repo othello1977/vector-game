@@ -122,6 +122,88 @@ export function createSpeedLines(count = 60): SpeedLine[] {
   return lines
 }
 
+// ─── Flash Warp Lines ───────────────────────────────────────────────────────
+
+export interface FlashWarpLine {
+  angle: number
+  color: number
+  /** Raggio da cui inizia la parte visibile (il "fronte" si sposta verso l'esterno) */
+  wipeRadius: number
+  /** Velocità del fronte in px/s */
+  wipeSpeed: number
+}
+
+export interface FlashWarpState {
+  lines: FlashWarpLine[]
+  timerMs: number
+}
+
+export function createFlashWarpState(): FlashWarpState {
+  return { lines: [], timerMs: 80 + Math.random() * 220 }
+}
+
+export function updateFlashWarp(state: FlashWarpState, delta: number): void {
+  const dt = delta / 1000
+
+  // Avanza il fronte di ciascuna linea verso l'esterno
+  for (const l of state.lines) {
+    l.wipeRadius += l.wipeSpeed * dt
+  }
+  // Rimuovi le linee il cui fronte ha superato l'anello
+  state.lines = state.lines.filter(l => l.wipeRadius < RING_OUTER_RADIUS + 10)
+
+  // Timer di spawn
+  state.timerMs -= delta
+  if (state.timerMs <= 0) {
+    const count = 1 + Math.floor(Math.random() * 3)
+    const baseAngle = Math.random() * Math.PI * 2
+    for (let i = 0; i < count; i++) {
+      const spread = (i - (count - 1) / 2) * 0.07
+      state.lines.push({
+        angle: baseAngle + spread,
+        color: Math.random() < 0.5 ? 0x44aaff : 0xffffff,
+        wipeRadius: 0,
+        wipeSpeed: 700 + Math.random() * 400,
+      })
+    }
+    state.timerMs = 80 + Math.random() * 220
+  }
+}
+
+export function drawFlashWarp(
+  graphics: Phaser.GameObjects.Graphics,
+  state: FlashWarpState,
+): void {
+  for (const l of state.lines) {
+    const startR = l.wipeRadius
+    const endR = RING_OUTER_RADIUS
+    if (startR >= endR) continue
+
+    // La linea visibile va da wipeRadius (fronte) verso l'esterno
+    const p0 = polarToCart(l.angle, startR)
+    const p1 = polarToCart(l.angle, endR)
+
+    // Glow esterno largo
+    graphics.lineStyle(16, l.color, 0.12)
+    graphics.beginPath()
+    graphics.moveTo(p0.x, p0.y)
+    graphics.lineTo(p1.x, p1.y)
+    graphics.strokePath()
+    // Glow medio
+    graphics.lineStyle(7, l.color, 0.40)
+    graphics.beginPath()
+    graphics.moveTo(p0.x, p0.y)
+    graphics.lineTo(p1.x, p1.y)
+    graphics.strokePath()
+    // Core brillante
+    graphics.lineStyle(2, l.color, 1.0)
+    graphics.beginPath()
+    graphics.moveTo(p0.x, p0.y)
+    graphics.lineTo(p1.x, p1.y)
+    graphics.strokePath()
+  }
+}
+
 /** Disegna un cerchio glow generico (doppio layer) */
 export function drawCircleGlow(
   graphics: Phaser.GameObjects.Graphics,
