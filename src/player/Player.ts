@@ -28,6 +28,8 @@ export class Player {
   radius: number
   shieldLevel = SHIELD_MAX_LEVEL
   private shieldRechargeTimer = 0
+  private thrustPulse = 0
+  private isThrusting = false
 
   constructor() {
     // Posizione iniziale: destra dell'anello, a metà fascia
@@ -57,6 +59,12 @@ export class Player {
       Math.min(RING_OUTER_RADIUS - PLAYER_HITBOX_R - 2, this.radius),
     )
 
+    // Traccia movimento per lampeggio motore
+    this.isThrusting = keys.left || keys.right || keys.up || keys.down
+    if (this.isThrusting) {
+      this.thrustPulse = (this.thrustPulse + delta * 0.018) % (Math.PI * 2)
+    }
+
     // Ricarica scudo
     this.shieldRechargeTimer += delta
     if (this.shieldRechargeTimer >= SHIELD_RECHARGE_INTERVAL && this.shieldLevel < SHIELD_MAX_LEVEL) {
@@ -68,45 +76,141 @@ export class Player {
   draw(graphics: Phaser.GameObjects.Graphics, hit = false): void {
     const color = hit ? 0xff4444 : COLOR_PLAYER
 
-    // Centro navicella
-    const center = polarToCart(this.angle, this.radius)
-
-    // Vertice anteriore puntato verso il CENTRO (raggio minore = interno)
+    // Apice (verso il centro, dove "guarda" la navicella)
     const front = polarToCart(this.angle, this.radius - PLAYER_SIZE * 1.4)
-    // Vertici laterali (base dimezzata rispetto alla versione precedente)
-    const left = polarToCart(this.angle - 0.18, this.radius + PLAYER_SIZE * 0.15)
-    const right = polarToCart(this.angle + 0.18, this.radius + PLAYER_SIZE * 0.15)
+    // Spalle — due punti leggermente avanti, stretti
+    const shoulderL = polarToCart(this.angle - 0.10, this.radius - PLAYER_SIZE * 0.15)
+    const shoulderR = polarToCart(this.angle + 0.10, this.radius - PLAYER_SIZE * 0.15)
+    // Base del corpo — due punti larghi
+    const baseL = polarToCart(this.angle - 0.18, this.radius + PLAYER_SIZE * 0.15)
+    const baseR = polarToCart(this.angle + 0.18, this.radius + PLAYER_SIZE * 0.15)
+    // Punta posteriore (notch centrale)
+    const tail  = polarToCart(this.angle, this.radius + PLAYER_SIZE * 0.50)
+    // Tip alette swept-back: stessa apertura angolare delle spalle ma ben più indietro
+    const finTipL = polarToCart(this.angle - 0.22, this.radius + PLAYER_SIZE * 0.42)
+    const finTipR = polarToCart(this.angle + 0.22, this.radius + PLAYER_SIZE * 0.42)
+    // Cockpit: vicino all'apice
+    const cockpit = polarToCart(this.angle, this.radius - PLAYER_SIZE * 0.75)
 
-    // Glow
-    graphics.lineStyle(6, color, 0.18)
+    // ── Glow esterno corpo ────────────────────────────────
+    graphics.lineStyle(9, color, 0.10)
     graphics.beginPath()
     graphics.moveTo(front.x, front.y)
-    graphics.lineTo(left.x, left.y)
-    graphics.lineTo(right.x, right.y)
+    graphics.lineTo(finTipL.x, finTipL.y)
+    graphics.lineTo(tail.x, tail.y)
+    graphics.lineTo(finTipR.x, finTipR.y)
     graphics.closePath()
     graphics.strokePath()
 
-    // Fill principale
-    graphics.fillStyle(color, 0.85)
+    // ── Alette swept-back ─────────────────────────────────
+    // Partono dalle spalle, spazzano indietro fino ai fin tip poi alla base
+    graphics.fillStyle(color, 0.28)
+    graphics.lineStyle(1, color, 0.55)
+    graphics.beginPath()
+    graphics.moveTo(shoulderL.x, shoulderL.y)
+    graphics.lineTo(finTipL.x, finTipL.y)
+    graphics.lineTo(baseL.x, baseL.y)
+    graphics.closePath()
+    graphics.fillPath()
+    graphics.strokePath()
+
+    graphics.beginPath()
+    graphics.moveTo(shoulderR.x, shoulderR.y)
+    graphics.lineTo(finTipR.x, finTipR.y)
+    graphics.lineTo(baseR.x, baseR.y)
+    graphics.closePath()
+    graphics.fillPath()
+    graphics.strokePath()
+
+    // ── Corpo principale (freccia con notch posteriore) ───
+    graphics.fillStyle(color, 0.84)
     graphics.beginPath()
     graphics.moveTo(front.x, front.y)
-    graphics.lineTo(left.x, left.y)
-    graphics.lineTo(right.x, right.y)
+    graphics.lineTo(baseL.x, baseL.y)
+    graphics.lineTo(tail.x, tail.y)
+    graphics.lineTo(baseR.x, baseR.y)
     graphics.closePath()
     graphics.fillPath()
 
-    // Outline bianco
-    graphics.lineStyle(1.5, 0xffffff, 0.9)
+    // Highlight centrale (striscia chiara lungo la chiglia)
+    const midFwd = polarToCart(this.angle, this.radius - PLAYER_SIZE * 0.5)
+    graphics.fillStyle(0xffffff, 0.13)
     graphics.beginPath()
     graphics.moveTo(front.x, front.y)
-    graphics.lineTo(left.x, left.y)
-    graphics.lineTo(right.x, right.y)
+    graphics.lineTo(shoulderL.x, shoulderL.y)
+    graphics.lineTo(midFwd.x, midFwd.y)
+    graphics.lineTo(shoulderR.x, shoulderR.y)
+    graphics.closePath()
+    graphics.fillPath()
+
+    // ── Outline nitido ────────────────────────────────────
+    graphics.lineStyle(1.5, 0xffffff, 0.85)
+    graphics.beginPath()
+    graphics.moveTo(front.x, front.y)
+    graphics.lineTo(baseL.x, baseL.y)
+    graphics.lineTo(tail.x, tail.y)
+    graphics.lineTo(baseR.x, baseR.y)
     graphics.closePath()
     graphics.strokePath()
 
-    // Punto centrale (cockpit)
-    graphics.fillStyle(0xffffff, 0.7)
-    graphics.fillCircle(center.x, center.y, 2)
+    // ── Motore al posteriore ──────────────────────────────
+    const thrustSize = this.isThrusting
+      ? PLAYER_SIZE * 0.42 + Math.sin(this.thrustPulse) * PLAYER_SIZE * 0.22
+      : PLAYER_SIZE * 0.20
+    const innerColor = this.isThrusting ? 0xfff0aa : 0xff9900
+    graphics.fillStyle(0xff6600, 0.20)
+    graphics.fillCircle(tail.x, tail.y, thrustSize + 7)
+    graphics.fillStyle(0xff8800, 0.50)
+    graphics.fillCircle(tail.x, tail.y, thrustSize)
+    graphics.fillStyle(innerColor, 0.95)
+    graphics.fillCircle(tail.x, tail.y, thrustSize * 0.40)
+
+    // ── Cockpit: ellisse orientata verso il centro dello schermo ──
+    const cockpitA = PLAYER_SIZE * 0.38
+    const cockpitB = PLAYER_SIZE * 0.22
+    const CSTEPS = 18
+    // Glow esterno bianco
+    graphics.lineStyle(8, 0xffffff, 0.25)
+    graphics.beginPath()
+    for (let i = 0; i <= CSTEPS; i++) {
+      const t = (i / CSTEPS) * Math.PI * 2
+      const lx = Math.cos(t) * (cockpitA + 4)
+      const ly = Math.sin(t) * (cockpitB + 4)
+      const x = cockpit.x - lx * Math.cos(this.angle) + ly * Math.sin(this.angle)
+      const y = cockpit.y - lx * Math.sin(this.angle) - ly * Math.cos(this.angle)
+      if (i === 0) graphics.moveTo(x, y)
+      else graphics.lineTo(x, y)
+    }
+    graphics.closePath()
+    graphics.strokePath()
+    // Fill bianco brillante
+    graphics.fillStyle(0xffffff, 0.55)
+    graphics.beginPath()
+    for (let i = 0; i <= CSTEPS; i++) {
+      const t = (i / CSTEPS) * Math.PI * 2
+      const lx = Math.cos(t) * cockpitA
+      const ly = Math.sin(t) * cockpitB
+      const x = cockpit.x - lx * Math.cos(this.angle) + ly * Math.sin(this.angle)
+      const y = cockpit.y - lx * Math.sin(this.angle) - ly * Math.cos(this.angle)
+      if (i === 0) graphics.moveTo(x, y)
+      else graphics.lineTo(x, y)
+    }
+    graphics.closePath()
+    graphics.fillPath()
+    // Outline bianco netto
+    graphics.lineStyle(2, 0xffffff, 1.0)
+    graphics.beginPath()
+    for (let i = 0; i <= CSTEPS; i++) {
+      const t = (i / CSTEPS) * Math.PI * 2
+      const lx = Math.cos(t) * cockpitA
+      const ly = Math.sin(t) * cockpitB
+      const x = cockpit.x - lx * Math.cos(this.angle) + ly * Math.sin(this.angle)
+      const y = cockpit.y - lx * Math.sin(this.angle) - ly * Math.cos(this.angle)
+      if (i === 0) graphics.moveTo(x, y)
+      else graphics.lineTo(x, y)
+    }
+    graphics.closePath()
+    graphics.strokePath()
 
     this.drawShield(graphics)
   }
